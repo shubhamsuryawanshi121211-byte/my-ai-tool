@@ -1,30 +1,47 @@
-const express = require("express");
-const cors = require("cors");
-const OpenAI = require("openai");
+
+import express from "express";
+import OpenAI from "openai";
+import "dotenv/config";
 
 const app = express();
-
-app.use(cors());
 app.use(express.json());
 
-const client = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-app.post("/chat", async (req, res) => {
+app.get("/", (req, res) => {
+  res.send("Mera AI Tool server is running!");
+});
+
+app.post("/api/chat", async (req, res) => {
   try {
-    const response = await client.responses.create({
-      model: "gpt-5-mini",
-      input: req.body.message
+    const message = req.body.message;
+
+    if (!message) {
+      return res.status(400).json({
+        error: "Message likho"
+      });
+    }
+
+    const response = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: message
     });
 
-    res.json({ reply: response.output_text });
+    res.json({
+      reply: response.output_text
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "AI se jawab nahi mil saka." });
+    console.error("AI request failed");
+    res.status(500).json({
+      error: "AI se jawab nahi mil paya. Dobara try karo."
+    });
   }
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Mera AI Tool server started");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
